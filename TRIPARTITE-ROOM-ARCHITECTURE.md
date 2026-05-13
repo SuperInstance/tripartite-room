@@ -1717,6 +1717,56 @@ They are complementary: use Coq to prove the constraint algorithms are correct, 
 
 ---
 
+## Appendix 0: Simulation-First Protocol (added 2026-05-13)
+
+### The Upgrade
+
+The tripartite room architecture has been upgraded with simulation-first coordination. Every room interaction now follows:
+
+```
+predict → apply → observe → confirm → supersede if wrong
+```
+
+### How Each Agent Uses Simulation-First
+
+| Agent | Prediction Type | Confirmation Signal |
+|-------|----------------|--------------------|
+| **Ground Truth** | Predicted measurements vs actual | Sensor readings after action |
+| **Constraint Satisfaction** | Predicted constraint state | Runtime constraint check |
+| **Communication** | Predicted reception quality | Acknowledgment from recipient |
+
+### Tile Lifecycle in Rooms
+
+Every tile in a tripartite room now carries lifecycle state:
+- **Active** — current truth, used by all three agents
+- **Superseded** — replaced by newer measurement, excluded from active queries
+- **Retracted** — withdrawn (sensor error, drift detected), excluded entirely
+
+The Ground Truth agent marks tiles Superseded when new measurements arrive. The Constraint Satisfaction agent marks tiles Retracted when violations are detected. The Communication agent only broadcasts Active tiles.
+
+### Lamport Clocks
+
+All three agents share a room-level Lamport clock. When any agent produces a tile, it ticks the clock. When tiles arrive from other rooms, the clock is merged. This gives causal ordering across the fleet without centralized coordination.
+
+### Implementation Status
+
+- ✅ PLATO Room Server v3 (75/75 tests) — lifecycle endpoints
+- ✅ plato-sdk v3.0.0 — lifecycle-aware client
+- ✅ holonomy-consensus v0.2.0 — trust tile lifecycle
+- ✅ fleet-memory v0.2.0 — lifecycle-aware distributed memory
+- ✅ folding-order v0.3.0 — simulation-first anomaly detection
+- ✅ dodecet-encoder v1.2.0 — agent lifecycle + predict_gate
+- ✅ constraint-flow-protocol v2 — CFP v2 spec
+- ✅ penrose-memory v1.1.0 — predict_recall + confirm
+- ✅ flux-lucid v0.3.0 — simulation-first intent alignment
+- ✅ constraint-inference v0.2.0 — prediction before update
+- ✅ intent-inference v0.2.0 — goal engagement prediction
+- ✅ constraint-theory-ecosystem — SPEC updated
+
+**12 repos upgraded, 489+ tests passing, ~95% PLATO write reduction.**
+
+---
+
 ## Appendix A: Glossary
 
 | Term | Definition |
